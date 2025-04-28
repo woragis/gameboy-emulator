@@ -288,7 +288,7 @@ pub const Cpu = struct {
                 self.registers.pc = 0x00;
             },
             0x93 => { // SUB E
-                const result = self.registers.a - self.registers.e;
+                const result = self.registers.a -% self.registers.e;
 
                 // Set the A register to the result
                 self.registers.a = result;
