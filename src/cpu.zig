@@ -528,12 +528,26 @@ pub const Cpu = struct {
                 self.registers.h = @truncate(hl >> 8);
                 self.registers.l = @truncate(hl);
             },
+            0x7C => {
+                // LD A, H
+                self.registers.a = self.registers.h; // Copy value from H to A
+                // No flags are affected
+                self.registers.pc += 1; // Move to the next instruction
+            },
+            0x7F => {
+                // LD A, A (No-op: Load A into itself)
+                // No changes to registers are necessary since the operation doesn't modify A.
+                // But we still need to increment the program counter.
+                self.registers.pc += 1;
+            },
             0x38 => {
                 // SBC A, n (Subtract with Borrow)
                 const n = self.read_memory(self.registers.pc + 1); // Read the immediate value
 
                 // Subtract the immediate value and carry from A
-                const result = self.registers.a - n - @as(u8, self.registers.get_carry_flag());
+                const carry_flag = self.registers.get_carry_flag();
+                const carry_flag_int: u8 = if (carry_flag) 1 else 0;
+                const result = self.registers.a - n - @as(u8, carry_flag_int);
 
                 // Set the result back into the accumulator
                 self.registers.a = result;
