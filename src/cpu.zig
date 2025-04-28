@@ -246,6 +246,15 @@ pub const Cpu = struct {
             0x1E => { // LD E, (HL)
                 self.registers.e = self.read_memory(self.registers.hl);
             },
+            0x03 => { // INC BC
+                // Increment the value of B and C as a 16-bit pair
+                const bc = @as(u16, self.registers.b) << 8 | @as(u16, self.registers.c);
+                const incremented_bc = bc + 1;
+
+                // Extract the new B and C values
+                self.registers.b = @intCast((incremented_bc >> 8) & 0xFF);
+                self.registers.c = @intCast(incremented_bc & 0xFF);
+            },
             0x8A => { // ADC A, D
                 const a = self.registers.a;
                 const d = self.registers.d;
