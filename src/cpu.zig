@@ -546,6 +546,12 @@ pub const Cpu = struct {
                 // But we still need to increment the program counter.
                 self.registers.pc += 1;
             },
+            0x50 => {
+                // LD D, B
+                self.registers.d = self.registers.b; // Copy value from B to D
+                // No flags are affected
+                self.registers.pc += 1; // Move to the next instruction
+            },
             0x39 => {
                 // ADD HL, SP
                 const hl = self.registers.hl;
