@@ -546,6 +546,14 @@ pub const Cpu = struct {
                 // But we still need to increment the program counter.
                 self.registers.pc += 1;
             },
+            0xFF => {
+                // RST 38h
+                // Push current program counter onto the stack
+                self.push_stack(self.registers.pc);
+
+                // Set the program counter to 0x38
+                self.registers.pc = 0x38;
+            },
             0x38 => {
                 // SBC A, n (Subtract with Borrow)
                 const n = self.read_memory(self.registers.pc + 1); // Read the immediate value
