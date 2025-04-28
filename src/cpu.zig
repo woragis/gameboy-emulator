@@ -217,6 +217,26 @@ pub const Cpu = struct {
                 self.registers.l -= 1;
                 // You can later handle flags (Z, N, H) here if needed
             },
+            0xD2 => { // JP NC, a16
+                const low = self.read_memory(self.registers.pc);
+                const high = self.read_memory(self.registers.pc + 1);
+                const addr = (@as(u16, high) << 8) | low;
+                self.registers.pc += 2;
+
+                if (!self.registers.get_carry_flag()) {
+                    self.registers.pc = addr;
+                }
+            },
+            0x0D => { // DEC C
+                const old_c = self.registers.c;
+                self.registers.c = self.registers.c - 1;
+
+                // Set flags
+                self.registers.set_zero_flag(self.registers.c == 0);
+                self.registers.set_negative_flag(true);
+                self.registers.set_half_carry_flag((old_c & 0x0F) == 0);
+                // Carry flag is NOT changed
+            },
             0x32 => { // LD (HL-), A
                 const address = (@as(u16, self.registers.h) << 8) | self.registers.l;
                 self.memory[address] = self.registers.a;
