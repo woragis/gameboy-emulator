@@ -16,6 +16,8 @@ const Registers = struct {
 const Cpu = struct {
     memory: [0x10000]u8, // 64KB of memory
     registers: Registers,
+    interrupts_enabled: bool = false,
+    // Add other CPU state variables here (e.g., interrupt flags, etc.)
 
     pub fn init() Cpu {
         return Cpu{
@@ -139,6 +141,183 @@ const Cpu = struct {
             0x0C => { // INC C
                 self.registers.c += 1;
             },
+            0x01 => { // LD BC, d16
+                const low = self.read_memory(self.registers.pc);
+                self.registers.pc += 1;
+                const high = self.read_memory(self.registers.pc);
+                self.registers.pc += 1;
+                self.registers.b = high;
+                self.registers.c = low;
+            },
+            0x11 => { // LD DE, d16
+                const low = self.read_memory(self.registers.pc);
+                self.registers.pc += 1;
+                const high = self.read_memory(self.registers.pc);
+                self.registers.pc += 1;
+                self.registers.d = high;
+                self.registers.e = low;
+            },
+            0x31 => { // LD SP, d16
+                const low = self.read_memory(self.registers.pc);
+                self.registers.pc += 1;
+                const high = self.read_memory(self.registers.pc);
+                self.registers.pc += 1;
+                self.registers.sp = (@as(u16, high) << 8) | low;
+            },
+            0x13 => { // INC DE
+                var de = (@as(u16, self.registers.d) << 8) | self.registers.e;
+                de +%= 1;
+                self.registers.d = @truncate(de >> 8);
+                self.registers.e = @truncate(de);
+            },
+            0x23 => { // INC HL
+                var hl = (@as(u16, self.registers.h) << 8) | self.registers.l;
+                hl +%= 1;
+                self.registers.h = @truncate(hl >> 8);
+                self.registers.l = @truncate(hl);
+            },
+            0x0A => { // LD A, (BC)
+                const address = (@as(u16, self.registers.b) << 8) | self.registers.c;
+                self.registers.a = self.read_memory(address);
+            },
+            0x1A => { // LD A, (DE)
+                const address = (@as(u16, self.registers.d) << 8) | self.registers.e;
+                self.registers.a = self.read_memory(address);
+            },
+            0x22 => { // LD (HL+), A
+                const address = (@as(u16, self.registers.h) << 8) | self.registers.l;
+                self.memory[address] = self.registers.a;
+                const new_hl = address + 1;
+                self.registers.h = @truncate(new_hl >> 8);
+                self.registers.l = @truncate(new_hl);
+            },
+            0x77 => { // LD (HL), A
+                const address = (@as(u16, self.registers.h) << 8) | self.registers.l;
+                self.memory[address] = self.registers.a;
+            },
+            0x7E => { // LD A, (HL)
+                const address = (@as(u16, self.registers.h) << 8) | self.registers.l;
+                self.registers.a = self.read_memory(address);
+            },
+            0xE0 => { // LDH (n), A
+                const address = 0xFF00 + @as(u16, self.read_memory(self.registers.pc));
+                // const address = 0xFF00 + self.read_memory(self.registers.pc);
+
+                self.registers.pc += 1;
+                self.memory[address] = self.registers.a;
+            },
+            0xE2 => { // LD (C), A
+                const address = 0xFF00 + @as(u16, self.registers.c);
+                // const address = 0xFF00 + self.registers.c;
+                self.memory[address] = self.registers.a;
+            },
+            0xF0 => { // LDH A, (n)
+                const address = 0xFF00 + @as(u16, self.read_memory(self.registers.pc));
+                // const address = 0xFF00 + self.read_memory(self.registers.pc);
+                self.registers.pc += 1;
+                self.registers.a = self.read_memory(address);
+            },
+            0xF3 => { // DI (disable interrupts)
+                self.interrupts_enabled = false;
+            },
+            0xFB => { // EI (enable interrupts)
+                self.interrupts_enabled = true;
+            },
+            0xFE => { // CP d8
+                const value = self.read_memory(self.registers.pc);
+                self.registers.pc += 1;
+                _ = self.registers.a -% value;
+                // Flags update would go here later
+            },
+            0xEA => { // LD (nn), A
+                const low = self.read_memory(self.registers.pc);
+                self.registers.pc += 1;
+                const high = self.read_memory(self.registers.pc);
+                self.registers.pc += 1;
+                const address = (@as(u16, high) << 8) | low;
+                self.memory[address] = self.registers.a;
+            },
+            0xFA => { // LD A, (nn)
+                const low = self.read_memory(self.registers.pc);
+                self.registers.pc += 1;
+                const high = self.read_memory(self.registers.pc);
+                self.registers.pc += 1;
+                const address = (@as(u16, high) << 8) | low;
+                self.registers.a = self.read_memory(address);
+            },
+            0xC5 => { // PUSH BC
+                self.registers.sp -%= 2;
+                const sp = self.registers.sp;
+                self.memory[sp] = self.registers.b;
+                self.memory[sp + 1] = self.registers.c;
+            },
+            0xD5 => { // PUSH DE
+                self.registers.sp -%= 2;
+                const sp = self.registers.sp;
+                self.memory[sp] = self.registers.d;
+                self.memory[sp + 1] = self.registers.e;
+            },
+            0xE5 => { // PUSH HL
+                self.registers.sp -%= 2;
+                const sp = self.registers.sp;
+                self.memory[sp] = self.registers.h;
+                self.memory[sp + 1] = self.registers.l;
+            },
+            0xF5 => { // PUSH AF
+                self.registers.sp -%= 2;
+                const sp = self.registers.sp;
+                self.memory[sp] = self.registers.a;
+                self.memory[sp + 1] = self.registers.f;
+            },
+            0xC1 => { // POP BC
+                self.registers.b = self.read_memory(self.registers.sp);
+                self.registers.c = self.read_memory(self.registers.sp + 1);
+                self.registers.sp +%= 2;
+            },
+            0xD1 => { // POP DE
+                self.registers.d = self.read_memory(self.registers.sp);
+                self.registers.e = self.read_memory(self.registers.sp + 1);
+                self.registers.sp +%= 2;
+            },
+            0xE1 => { // POP HL
+                self.registers.h = self.read_memory(self.registers.sp);
+                self.registers.l = self.read_memory(self.registers.sp + 1);
+                self.registers.sp +%= 2;
+            },
+            0xF1 => { // POP AF
+                self.registers.a = self.read_memory(self.registers.sp);
+                self.registers.f = self.read_memory(self.registers.sp + 1);
+                self.registers.sp +%= 2;
+            },
+            0x2F => { // CPL (complement A)
+                self.registers.a = ~self.registers.a;
+            },
+            0x3D => { // DEC A
+                self.registers.a -%= 1;
+            },
+            0x17 => { // RLA
+                const old_carry = (self.registers.f & 0x10) >> 4;
+                self.registers.a = (self.registers.a << 1) | old_carry;
+                // const new_carry = (self.registers.a & 0x80) >> 7;
+                // update carry flag (optional now)
+            },
+            0x1F => { // RRA
+                const old_carry = (self.registers.f & 0x10) << 3;
+                self.registers.a = (self.registers.a >> 1) | old_carry;
+                // const new_carry = self.registers.a & 0x01;
+                // update carry flag (optional now)
+            },
+            0x07 => { // RLCA
+                const carry = (self.registers.a & 0x80) >> 7;
+                self.registers.a = (self.registers.a << 1) | carry;
+                // update carry flag (optional now)
+            },
+            0x0F => { // RRCA
+                const carry = self.registers.a & 0x01;
+                self.registers.a = (self.registers.a >> 1) | (carry << 7);
+                // update carry flag (optional now)
+            },
+
             else => {
                 std.debug.print("Unknown opcode: {X}\n", .{opcode});
                 unreachable;
