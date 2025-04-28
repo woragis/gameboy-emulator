@@ -237,6 +237,9 @@ pub const Cpu = struct {
                 self.registers.set_half_carry_flag((old_c & 0x0F) == 0);
                 // Carry flag is NOT changed
             },
+            0x41 => { // LD B, C
+                self.registers.b = self.registers.c;
+            },
             0x8A => { // ADC A, D
                 const a = self.registers.a;
                 const d = self.registers.d;
