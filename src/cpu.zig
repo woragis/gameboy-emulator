@@ -534,6 +534,12 @@ pub const Cpu = struct {
                 // No flags are affected
                 self.registers.pc += 1; // Move to the next instruction
             },
+            0x78 => {
+                // LD A, B
+                self.registers.a = self.registers.b; // Copy value from B to A
+                // No flags are affected
+                self.registers.pc += 1; // Move to the next instruction
+            },
             0x7F => {
                 // LD A, A (No-op: Load A into itself)
                 // No changes to registers are necessary since the operation doesn't modify A.
