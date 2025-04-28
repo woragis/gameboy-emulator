@@ -11,6 +11,8 @@ const Registers = struct {
     f: u8,
     pc: u16, // Program Counter
     sp: u16, // Stack Pointer (later)
+    hl: u16, // HL register pair
+    de: u16, // DE register pair
 };
 
 const Cpu = struct {
@@ -33,6 +35,8 @@ const Cpu = struct {
                 .f = 0, // Flag register
                 .pc = 0x0100, // Program starts at 0x0100
                 .sp = 0xFFFE, // Stack Pointer
+                .hl = 0xFFFF, // HL register pair initialized to 0xFFFF
+                .de = 0xFFFF, // DE register pair initialized to 0xFFFF
             },
         };
     }
@@ -114,9 +118,19 @@ const Cpu = struct {
                 self.registers.d += 1;
                 // Handle flags (Z, N, H) later if needed
             },
+            // 0x15 => { // DEC D
+            //     self.registers.d -= 1;
+            //     // Handle flags (Z, N, H) later if needed
+            // },
             0x15 => { // DEC D
-                self.registers.d -= 1;
-                // Handle flags (Z, N, H) later if needed
+                if (self.registers.d == 0) {
+                    // Set the N flag (because it's a subtraction)
+                    self.registers.f |= 0x40;
+                } else {
+                    // If not 0, simply decrement D.
+                    self.registers.d -= 1;
+                }
+                // Handle other flags like Z and H later if needed
             },
             0x16 => { // LD D, d8
                 const value = self.read_memory(self.registers.pc);
@@ -376,7 +390,36 @@ const Cpu = struct {
                 self.registers.a = (self.registers.a >> 1) | (carry << 7);
                 // update carry flag (optional now)
             },
+            0xB0 => { // RES 4, B
+                // Reset bit 4 of register B (B & 0xEF)
+                self.registers.b &= 0xEF;
+            },
+            0x7B => { // LD A, E
+                self.registers.a = self.registers.e;
+            },
+            0xBF => { // LD A, A (no-op)
+                // No operation: A remains unchanged
+            },
+            0x29 => { // ADD HL, DE
+                const hl = self.registers.hl;
+                const de = self.registers.de;
+                const result = hl + de;
 
+                // Set the HL register to the result
+                self.registers.hl = result;
+
+                // Set the flags
+                self.registers.flags.z = (result == 0);
+                self.registers.flags.n = false; // No subtraction
+                self.registers.flags.h = ((hl & 0xFFF) + (de & 0xFFF) > 0xFFF); // Half carry
+                self.registers.flags.c = (result > 0xFFFF); // Carry
+            },
+            0x2B => { // DEC HL
+                var hl = (@as(u16, self.registers.h) << 8) | self.registers.l;
+                hl -%= 1;
+                self.registers.h = @truncate(hl >> 8);
+                self.registers.l = @truncate(hl);
+            },
             else => {
                 std.debug.print("Unknown opcode: {X}\n", .{opcode});
                 unreachable;
