@@ -1,3 +1,6 @@
 raw/
 roms/*
+*.gb
+*.gbc
+*.gba
 !roms/.keep
