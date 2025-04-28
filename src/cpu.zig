@@ -1,9 +1,11 @@
 const std = @import("std");
 const Registers = @import("memory.zig").Registers;
+const Gpu = @import("gpu.zig").Gpu;
 
 pub const Cpu = struct {
     memory: [0x10000]u8, // 64KB of memory
     registers: Registers,
+    gpu: Gpu, // GPU instance for rendering
     interrupts_enabled: bool = false,
     // Add other CPU state variables here (e.g., interrupt flags, etc.)
 
@@ -24,6 +26,7 @@ pub const Cpu = struct {
                 .hl = 0xFFFF, // HL register pair initialized to 0xFFFF
                 .de = 0xFFFF, // DE register pair initialized to 0xFFFF
             },
+            .gpu = Gpu.init(), // Initialize GPU
         };
     }
 
