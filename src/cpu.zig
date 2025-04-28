@@ -546,6 +546,21 @@ pub const Cpu = struct {
                 // But we still need to increment the program counter.
                 self.registers.pc += 1;
             },
+            0x39 => {
+                // ADD HL, SP
+                const hl = self.registers.hl;
+                const sp = self.registers.sp;
+                const result = hl +% sp;
+
+                // Update HL register with the result
+                self.registers.hl = result;
+
+                // Set the flags
+                self.registers.set_zero_flag(false); // Zero flag is not affected
+                self.registers.set_negative_flag(false); // No subtraction, so Negative flag is clear
+                self.registers.set_half_carry_flag((hl & 0xFFF) + (sp & 0xFFF) > 0xFFF); // Half carry check
+                self.registers.set_carry_flag(result > 0xFFFF); // Carry flag check (overflow)
+            },
             0xFF => {
                 // RST 38h
                 // Push current program counter onto the stack
