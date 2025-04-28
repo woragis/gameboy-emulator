@@ -528,6 +528,26 @@ pub const Cpu = struct {
                 self.registers.h = @truncate(hl >> 8);
                 self.registers.l = @truncate(hl);
             },
+            0x38 => {
+                // SBC A, n (Subtract with Borrow)
+                const n = self.read_memory(self.registers.pc + 1); // Read the immediate value
+
+                // Subtract the immediate value and carry from A
+                const result = self.registers.a - n - @as(u8, self.registers.get_carry_flag());
+
+                // Set the result back into the accumulator
+                self.registers.a = result;
+
+                // Set flags
+                self.registers.set_zero_flag(result == 0); // Zero flag
+                self.registers.set_negative_flag(true); // Negative flag
+                self.registers.set_half_carry_flag((self.registers.a & 0x0F) < (n & 0x0F)); // Half carry
+                self.registers.set_carry_flag(self.registers.a > result); // Carry flag
+
+                // Increment the Program Counter (PC) to skip the immediate byte
+                self.registers.pc += 2;
+            },
+
             else => {
                 std.debug.print("Unknown opcode: {X}\n", .{opcode});
                 unreachable;
