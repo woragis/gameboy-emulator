@@ -1,7 +1,7 @@
 const std = @import("std");
-const Registers = @import("memory.zig");
+const Registers = @import("memory.zig").Registers;
 
-const Cpu = struct {
+pub const Cpu = struct {
     memory: [0x10000]u8, // 64KB of memory
     registers: Registers,
     interrupts_enabled: bool = false,
@@ -389,7 +389,7 @@ const Cpu = struct {
             0x29 => { // ADD HL, DE
                 const hl = self.registers.hl;
                 const de = self.registers.de;
-                const result = hl + de;
+                const result = hl +% de;
 
                 // Set the HL register to the result
                 self.registers.hl = result;

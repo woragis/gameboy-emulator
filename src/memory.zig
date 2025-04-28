@@ -1,4 +1,4 @@
-const Registers = struct {
+pub const Registers = struct {
     a: u8,
     b: u8,
     c: u8,

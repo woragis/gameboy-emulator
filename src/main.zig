@@ -1,5 +1,5 @@
 const std = @import("std");
-const Cpu = @import("cpu.zig");
+const Cpu = @import("cpu.zig").Cpu;
 
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
