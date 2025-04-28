@@ -255,6 +255,18 @@ pub const Cpu = struct {
                 self.registers.b = @intCast((incremented_bc >> 8) & 0xFF);
                 self.registers.c = @intCast(incremented_bc & 0xFF);
             },
+            0x93 => { // SUB E
+                const result = self.registers.a - self.registers.e;
+
+                // Set the A register to the result
+                self.registers.a = result;
+
+                // Set the flags
+                self.registers.set_zero_flag(self.registers.a == 0); // Zero flag
+                self.registers.set_negative_flag(true); // Negative flag
+                self.registers.set_half_carry_flag((self.registers.a & 0xF) < (self.registers.e & 0xF)); // Half carry
+                self.registers.set_carry_flag(result > 0xFF); // Carry flag
+            },
             0x8A => { // ADC A, D
                 const a = self.registers.a;
                 const d = self.registers.d;
