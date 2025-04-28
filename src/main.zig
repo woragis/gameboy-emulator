@@ -3,15 +3,16 @@ const Cpu = @import("cpu.zig").Cpu;
 
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
-    const stdin = std.io.getStdIn().reader();
+    // const stdin = std.io.getStdIn().reader();
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
     try stdout.print("Enter path to .gb file: ", .{});
 
-    var input_buffer: [256]u8 = undefined;
-    const input = try stdin.readUntilDelimiterOrEof(&input_buffer, '\n');
-    const path = std.mem.trimRight(u8, input orelse "", "\r\n");
+    // var input_buffer: [256]u8 = undefined;
+    // const input = try stdin.readUntilDelimiterOrEof(&input_buffer, '\n');
+    // const path = std.mem.trimRight(u8, input orelse "tetris.gb", "\r\n");
+    const path = std.mem.trimRight(u8, "tetris.gb", "\r\n");
 
     const file = try std.fs.cwd().openFile(path, .{ .mode = .read_only });
     defer file.close();

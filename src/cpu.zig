@@ -77,6 +77,19 @@ pub const Cpu = struct {
                 self.registers.pc += 1;
                 self.registers.c = value;
             },
+            0x08 => { // LD (a16), SP
+                const low = self.read_memory(self.registers.pc);
+                const high = self.read_memory(self.registers.pc + 1);
+                self.registers.pc += 2;
+
+                const addr = (@as(u16, high) << 8) | low;
+
+                const sp = self.registers.sp;
+
+                // Write SP into memory at addr (little endian)
+                self.memory[addr] = @intCast(sp & 0xFF); // low byte
+                self.memory[addr + 1] = @intCast((sp >> 8) & 0xFF); // high byte
+            },
             0x10 => { // STOP
                 // No operation for STOP, this is a halt opcode
                 // You can add your own logic if you need to stop the emulator or handle it differently
