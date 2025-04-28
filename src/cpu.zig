@@ -240,6 +240,12 @@ pub const Cpu = struct {
             0x41 => { // LD B, C
                 self.registers.b = self.registers.c;
             },
+            0x69 => { // LD L, C
+                self.registers.l = self.registers.c;
+            },
+            0x1E => { // LD E, (HL)
+                self.registers.e = self.read_memory(self.registers.hl);
+            },
             0x8A => { // ADC A, D
                 const a = self.registers.a;
                 const d = self.registers.d;
