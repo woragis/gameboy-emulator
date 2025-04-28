@@ -1,5 +1,6 @@
 const std = @import("std");
 const Cpu = @import("cpu.zig").Cpu;
+const SdlContext = @import("sdl.zig").SdlContext;
 
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
@@ -21,10 +22,17 @@ pub fn main() !void {
     defer allocator.free(rom);
 
     var cpu = Cpu.init();
+    var sdl = try SdlContext.init();
+    defer sdl.deinit();
     cpu.load_rom(rom);
 
     try stdout.print("Loaded ROM successfully!\n", .{});
 
-    cpu.run();
+    while (true) {
+        cpu.run();
+        cpu.gpu.render_frame(&cpu);
+        sdl.draw_frame(&cpu.gpu.framebuffer);
+        std.time.sleep(16 * std.time.ns_per_second / 1000); // 60 FPS
+    }
     try stdout.print("CPU execution finished.\n", .{});
 }
