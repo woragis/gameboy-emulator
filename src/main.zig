@@ -32,7 +32,7 @@ pub fn main() !void {
         cpu.run();
         cpu.gpu.render_frame(&cpu);
         sdl.draw_frame(&cpu.gpu.framebuffer);
-        std.time.sleep(16 * std.time.ns_per_second / 1000); // 60 FPS
+        std.time.sleep(16 * std.time.ns_per_s / 1000); // 60 FPS
     }
     try stdout.print("CPU execution finished.\n", .{});
 }

@@ -48,9 +48,12 @@ pub const SdlContext = struct {
     }
 
     pub fn draw_frame(self: *SdlContext, framebuffer: []const u8) void {
-        var pixels_ptr: ?*u8 = null;
+        // var pixels_ptr: ?*u8 = null;
+        const pixels_ptr: [*c]?*anyopaque = null;
+        // const pitch_ptr: [*c]?*c_int = null;
         var pitch: c_int = 0;
-        _ = sdl.SDL_LockTexture(self.texture, null, &pixels_ptr, &pitch);
+        _ = sdl.SDL_LockTexture(self.texture, null, &@as(*anyopaque, pixels_ptr), &pitch);
+        // _ = sdl.SDL_LockTexture(self.texture, null, &pixels_ptr, &pitch);
 
         if (pixels_ptr) |pixels| {
             var dst = pixels;

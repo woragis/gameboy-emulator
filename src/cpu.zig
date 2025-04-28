@@ -38,7 +38,7 @@ pub const Cpu = struct {
         }
     }
 
-    fn read_memory(self: *Cpu, address: u16) u8 {
+    pub fn read_memory(self: *Cpu, address: u16) u8 {
         return self.memory[address];
     }
 
