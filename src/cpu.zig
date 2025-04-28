@@ -47,6 +47,17 @@ pub const Cpu = struct {
         }
     }
 
+    pub fn push_stack(self: *Cpu, value: u16) void {
+        // Decrement the stack pointer to point to the next available stack slot
+        self.registers.sp -= 2;
+
+        // Write the high byte of the value to memory at the current stack pointer
+        self.memory[self.registers.sp] = @as(u8, @intCast(value >> 8)); // High byte
+
+        // Write the low byte of the value to memory at the next stack location
+        self.memory[self.registers.sp + 1] = @as(u8, @intCast(value & 0xFF)); // Low byte
+    }
+
     fn execute_opcode(self: *Cpu, opcode: u8) void {
         switch (opcode) {
             0x00 => {}, // NOP
@@ -254,6 +265,27 @@ pub const Cpu = struct {
                 // Extract the new B and C values
                 self.registers.b = @intCast((incremented_bc >> 8) & 0xFF);
                 self.registers.c = @intCast(incremented_bc & 0xFF);
+            },
+            0x67 => { // LD H, A
+                self.registers.h = self.registers.a;
+            },
+            0xFC => { // LD A, (nn)
+                const low_byte = self.read_memory(self.registers.pc + 1);
+                const high_byte = self.read_memory(self.registers.pc + 2);
+                const address = @as(u16, high_byte) << 8 | @as(u16, low_byte); // Corrected with @as(u16)
+
+                // Load the value from the memory address into register A
+                self.registers.a = self.read_memory(address);
+
+                // Increment the program counter by 3 (to account for the instruction and its address bytes)
+                self.registers.pc += 3;
+            },
+            0xC7 => { // RST 00H
+                // Push the current PC value to the stack
+                self.push_stack(self.registers.pc);
+
+                // Jump to the restart address 0x00
+                self.registers.pc = 0x00;
             },
             0x93 => { // SUB E
                 const result = self.registers.a - self.registers.e;
