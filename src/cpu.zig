@@ -42,7 +42,16 @@ pub const Cpu = struct {
     pub fn run(self: *Cpu) void {
         while (true) {
             const opcode = self.read_memory(self.registers.pc);
-            self.registers.pc += 1;
+
+            // Check if PC overflows, and handle accordingly
+            if (self.registers.pc == 0xFFFF) {
+                // Option 1: Wrap around to 0
+                self.registers.pc = 0x0000;
+            } else {
+                self.registers.pc += 1;
+            }
+
+            // Execute the opcode
             self.execute_opcode(opcode);
         }
     }
@@ -548,7 +557,7 @@ pub const Cpu = struct {
             },
             0x50 => {
                 // LD D, B
-                self.registers.d = self.registers.b; // Copy value from B to D
+                self.registers.b = self.registers.d; // Copy value from B to D
                 // No flags are affected
                 self.registers.pc += 1; // Move to the next instruction
             },
