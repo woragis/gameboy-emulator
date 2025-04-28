@@ -159,6 +159,19 @@ pub const Cpu = struct {
                 self.registers.h = @truncate(new_hl >> 8);
                 self.registers.l = @truncate(new_hl);
             },
+            0x19 => { // ADD HL, DE
+                const hl = self.registers.hl;
+                const de = self.registers.de;
+                const result = hl +% de; // Wrapping addition
+
+                self.registers.hl = result;
+
+                // Flags:
+                // Zero flag: Unaffected! (do NOT set or reset it)
+                self.registers.set_negative_flag(false); // Clear N flag
+                self.registers.set_half_carry_flag((hl & 0x0FFF) + (de & 0x0FFF) > 0x0FFF); // Half-carry if carry from bit 11
+                self.registers.set_carry_flag(@as(u32, hl) + @as(u32, de) > 0xFFFF); // Carry if carry from bit 15
+            },
             0x20 => { // JR NZ, r8
                 const offset = @as(u16, @bitCast(@as(u16, self.read_memory(self.registers.pc))));
                 self.registers.pc +%= 1;
