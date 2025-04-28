@@ -134,31 +134,6 @@ pub const Cpu = struct {
                 self.registers.pc += 1;
                 self.registers.pc += @as(u8, offset); // Use signed byte offset
             },
-            0x1A => { // LD A, (DE)
-                const address = (@as(u16, self.registers.d) << 8) | self.registers.e;
-                self.registers.a = self.read_memory(address);
-            },
-            0x1C => { // INC E
-                self.registers.e += 1;
-                // Handle flags (Z, N, H) later if needed
-            },
-            0x1D => { // DEC E
-                self.registers.e -= 1;
-                // Handle flags (Z, N, H) later if needed
-            },
-            0x1F => { // RRA
-                const old_carry = (self.registers.f & 0x10) << 3;
-                self.registers.a = (self.registers.a >> 1) | old_carry;
-                // const new_carry = self.registers.a & 0x01;
-                // update carry flag (optional now)
-            },
-            0x2A => { // LD A, (HL+)
-                const address = (@as(u16, self.registers.h) << 8) | self.registers.l;
-                self.registers.a = self.memory[address];
-                const new_hl = address + 1;
-                self.registers.h = @truncate(new_hl >> 8);
-                self.registers.l = @truncate(new_hl);
-            },
             0x19 => { // ADD HL, DE
                 const hl = self.registers.hl;
                 const de = self.registers.de;
@@ -195,6 +170,31 @@ pub const Cpu = struct {
                 const value = self.read_memory(self.registers.pc);
                 self.registers.pc += 1;
                 self.registers.h = value;
+            },
+            0x1A => { // LD A, (DE)
+                const address = (@as(u16, self.registers.d) << 8) | self.registers.e;
+                self.registers.a = self.read_memory(address);
+            },
+            0x1C => { // INC E
+                self.registers.e += 1;
+                // Handle flags (Z, N, H) later if needed
+            },
+            0x1D => { // DEC E
+                self.registers.e -= 1;
+                // Handle flags (Z, N, H) later if needed
+            },
+            0x1F => { // RRA
+                const old_carry = (self.registers.f & 0x10) << 3;
+                self.registers.a = (self.registers.a >> 1) | old_carry;
+                // const new_carry = self.registers.a & 0x01;
+                // update carry flag (optional now)
+            },
+            0x2A => { // LD A, (HL+)
+                const address = (@as(u16, self.registers.h) << 8) | self.registers.l;
+                self.registers.a = self.memory[address];
+                const new_hl = address + 1;
+                self.registers.h = @truncate(new_hl >> 8);
+                self.registers.l = @truncate(new_hl);
             },
             0x2C => { // INC L
                 self.registers.l += 1;
