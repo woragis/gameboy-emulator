@@ -237,6 +237,20 @@ pub const Cpu = struct {
                 self.registers.set_half_carry_flag((old_c & 0x0F) == 0);
                 // Carry flag is NOT changed
             },
+            0x8A => { // ADC A, D
+                const a = self.registers.a;
+                const d = self.registers.d;
+                const carry: u8 = if (self.registers.get_carry_flag()) 1 else 0;
+
+                const result = @as(u16, a) + @as(u16, d) + carry;
+                self.registers.a = @intCast(result & 0xFF);
+
+                // Set flags
+                self.registers.set_zero_flag(self.registers.a == 0);
+                self.registers.set_negative_flag(false);
+                self.registers.set_half_carry_flag(((a & 0xF) + (d & 0xF) + carry) > 0xF);
+                self.registers.set_carry_flag(result > 0xFF);
+            },
             0x32 => { // LD (HL-), A
                 const address = (@as(u16, self.registers.h) << 8) | self.registers.l;
                 self.memory[address] = self.registers.a;
