@@ -9,7 +9,7 @@ pub const Cpu = struct {
     interrupts_enabled: bool = false,
     // Add other CPU state variables here (e.g., interrupt flags, etc.)
 
-    pub fn init() Cpu {
+    pub fn init() ?Cpu {
         return Cpu{
             .memory = undefined,
             .registers = Registers{
