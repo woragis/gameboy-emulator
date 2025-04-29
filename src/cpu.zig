@@ -11,7 +11,7 @@ pub const Cpu = struct {
 
     pub fn init() Cpu {
         return Cpu{
-            .memory = undefined,
+            .memory = [_]u8{0} ** 0x10000, // Initialize memory to 0
             .registers = Registers{
                 .a = 0, // General purpose registers
                 .b = 0, // General purpose registers
@@ -31,11 +31,8 @@ pub const Cpu = struct {
     }
 
     pub fn load_rom(self: *Cpu, rom: []const u8) void {
-        for (rom, 0..) |byte, i| {
-            if (i < self.memory.len) {
-                self.memory[i] = byte;
-            }
-        }
+        std.debug.print("Loading ROM into memory (len: {})...\n", .{rom.len});
+        std.mem.copyForwards(u8, self.memory[0..rom.len], rom);
     }
 
     pub fn read_memory(self: *Cpu, address: u16) u8 {

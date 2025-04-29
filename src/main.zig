@@ -28,9 +28,10 @@ pub fn main() !void {
     try stdout.print("Loaded ROM successfully! Size: {} bytes\n", .{rom.len});
 
     // Initialize CPU and SDL
-    var cpu = Cpu.init(); // or use ?Cpu and unwrap if Cpu.init() returns optional
-    var sdl = try SdlContext.init();
-    defer sdl.deinit();
+    var cpu: Cpu = Cpu.init(); // or use ?Cpu and unwrap if Cpu.init() returns optional
+    try stdout.print("Cpu memory length: {}", .{cpu.registers.a});
+    // var sdl = try SdlContext.init();
+    // defer sdl.deinit();
 
     // Load the ROM into the CPU
     cpu.load_rom(rom);
@@ -39,8 +40,8 @@ pub fn main() !void {
     try stdout.print("Starting emulator...\n", .{});
     while (true) {
         cpu.run();
-        cpu.gpu.render_frame(&cpu);
-        sdl.draw_frame(&cpu.gpu.framebuffer);
+        // cpu.gpu.render_frame(&cpu);
+        // sdl.draw_frame(&cpu.gpu.framebuffer);
         std.time.sleep(16 * std.time.ns_per_s / 1000);
     }
 }
