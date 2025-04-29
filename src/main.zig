@@ -29,9 +29,8 @@ pub fn main() !void {
 
     // Initialize CPU and SDL
     var cpu: Cpu = Cpu.init(); // or use ?Cpu and unwrap if Cpu.init() returns optional
-    try stdout.print("Cpu memory length: {}", .{cpu.registers.a});
-    // var sdl = try SdlContext.init();
-    // defer sdl.deinit();
+    var sdl = try SdlContext.init();
+    defer sdl.deinit();
 
     // Load the ROM into the CPU
     cpu.load_rom(rom);

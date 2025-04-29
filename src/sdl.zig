@@ -6,24 +6,34 @@ const sdl = @cImport({
 const gpu = @import("gpu.zig");
 
 pub const SdlContext = struct {
-    window: *sdl.SDL_Window,
-    renderer: *sdl.SDL_Renderer,
-    texture: *sdl.SDL_Texture,
+    window: ?*sdl.SDL_Window,
+    renderer: ?*sdl.SDL_Renderer,
+    texture: ?*sdl.SDL_Texture,
 
     pub fn init() !SdlContext {
-        if (sdl.SDL_Init(sdl.SDL_INIT_VIDEO) != 0)
+        if (sdl.SDL_Init(sdl.SDL_INIT_VIDEO) != 0) {
+            std.debug.print("SDL_Init failed: {s}\n", .{@as([*c]const u8, @ptrCast(sdl.SDL_GetError()))});
             return error.SdlInitFailed;
+        }
 
         const window = sdl.SDL_CreateWindow(
             "GameBoy Emulator",
             sdl.SDL_WINDOWPOS_CENTERED,
             sdl.SDL_WINDOWPOS_CENTERED,
-            gpu.SCREEN_WIDTH * 2, // Scale 2x
+            gpu.SCREEN_WIDTH * 2,
             gpu.SCREEN_HEIGHT * 2,
             0,
-        ) orelse return error.WindowCreationFailed;
+        );
+        if (@as([*c]const u8, @ptrCast(window)) == null) {
+            std.debug.print("SDL_CreateWindow failed: {s}\n", .{@as([*c]const u8, @ptrCast(sdl.SDL_GetError()))});
+            return error.WindowCreationFailed;
+        }
 
-        const renderer = sdl.SDL_CreateRenderer(window, -1, 0) orelse return error.RendererCreationFailed;
+        const renderer = sdl.SDL_CreateRenderer(window, -1, 0);
+        if (@as([*c]const u8, @ptrCast(renderer)) == null) {
+            std.debug.print("SDL_CreateRenderer failed: {s}\n", .{@as([*c]const u8, @ptrCast(sdl.SDL_GetError()))});
+            return error.RendererCreationFailed;
+        }
 
         const texture = sdl.SDL_CreateTexture(
             renderer,
@@ -31,7 +41,11 @@ pub const SdlContext = struct {
             sdl.SDL_TEXTUREACCESS_STREAMING,
             gpu.SCREEN_WIDTH,
             gpu.SCREEN_HEIGHT,
-        ) orelse return error.TextureCreationFailed;
+        );
+        if (@as([*c]const u8, @ptrCast(texture)) == null) {
+            std.debug.print("SDL_CreateTexture failed: {s}\n", .{@as([*c]const u8, @ptrCast(sdl.SDL_GetError()))});
+            return error.TextureCreationFailed;
+        }
 
         return SdlContext{
             .window = window,
